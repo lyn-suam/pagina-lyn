@@ -1,0 +1,53 @@
+const express = require('express');
+const sqlite3 = require('sqlite3').verbose();
+const multer = require('multer');
+const path = require('path');
+const app = express();
+
+const storage = multer.diskStorage({
+    destination: './uploads/',
+    filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
+});
+const upload = multer({ storage });
+
+app.use(express.json());
+app.use(express.static('.')); 
+app.use('/uploads', express.static('uploads'));
+
+const db = new sqlite3.Database('./tienda.db');
+db.run("CREATE TABLE IF NOT EXISTS productos (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT, precio REAL, imagen TEXT)");
+
+app.get('/productos', (req, res) => {
+    db.all("SELECT * FROM productos", [], (err, rows) => res.json(rows));
+});
+
+app.post('/productos', upload.single('imagen'), (req, res) => {
+    const { nombre, precio } = req.body;
+    const imagenPath = '/uploads/' + req.file.filename;
+    db.run("INSERT INTO productos (nombre, precio, imagen) VALUES (?, ?, ?)", [nombre, precio, imagenPath], (err) => {
+        if (err) return res.status(500).send(err.message);
+        res.send("Producto guardado");
+    });
+});
+
+app.post('/login', (req, res) => {
+    const { usuario, password } = req.body;
+    // Credenciales "de base" (hardcoded)
+    if (usuario === "admin" && password === "1234") {
+        res.json({ success: true });
+    } else {
+        res.status(401).json({ success: false, message: "Acceso denegado" });
+    }
+});
+
+app.delete('/productos/:id', (req, res) => {
+    const id = req.params.id;
+    db.run("DELETE FROM productos WHERE id = ?", id, (err) => {
+        if (err) return res.status(500).send(err.message);
+        res.send("Producto eliminado");
+    });
+});
+
+//app.listen(3000, () => console.log('Servidor activo en http://localhost:3000'));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}`));

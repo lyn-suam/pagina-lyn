@@ -1,0 +1,82 @@
+:root {
+    --primary: #2c3e50;
+    --accent: #e67e22;
+    --light: #ecf0f1;
+}
+
+body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--light); color: #333; }
+
+.navbar { background: var(--primary); color: white; padding: 1.5rem 5%; display: flex; justify-content: space-between; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 2rem; padding: 2rem 5%; }
+
+.producto-card { background: white; padding: 2rem; border-radius: 15px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: 0.3s; }
+
+.producto-card:hover { transform: translateY(-10px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+
+.price { font-size: 1.5rem; font-weight: bold; color: var(--accent); margin: 1rem 0; }
+
+button { background: var(--accent); color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+
+
+.form-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centra horizontalmente */
+    justify-content: center;
+    text-align: center;
+    margin: 20px auto;
+    max-width: 400px;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+}
+
+.form-container input {
+    margin-bottom: 10px;
+    padding: 8px;
+    width: 80%;
+}
+
+.btn-guardar {
+    background-color: #f39c12; /* Tu color naranja */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+/* Esto quitará el color morado y le dará un estilo más profesional */
+.navbar nav ul li a {
+    color: white;           /* Cambia el color del texto a blanco */
+    text-decoration: none;  /* Quita el subrayado */
+    font-weight: bold;
+    padding: 10px;
+}
+
+/* Efecto al pasar el mouse por encima */
+.navbar nav ul li a:hover {
+    color: #ffcc00;         /* Cambia a un color dorado/amarillo al pasar el ratón */
+    cursor: pointer;
+}
+
+/* Botón de eliminar (Estilo Vendedor) */
+.btn-eliminar {
+    background-color: #ff4d4d; /* Rojo suave */
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 5px;
+}
+
+.btn-eliminar:hover {
+    background-color: #cc0000; /* Rojo oscuro al pasar el ratón */
+}
+
+/* Opcional: Dale un borde especial a las tarjetas cuando estás como vendedor */
+.vendedor-modo {
+    border: 2px solid #ff4d4d;
+}
