@@ -9,6 +9,22 @@ const storage = multer.diskStorage({
     filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
 });
 const upload = multer({ storage });
+const mongoose = require('mongoose');
+
+// Aquí va el link que copiaste de "Drivers" en Atlas
+// IMPORTANTE: Cambia <password> por tu contraseña real: jajajaok
+const uri = "mongodb+srv://pagina_lyn_store:jajajaok@cluster0.XXXXX.mongodb.net/?retryWrites=true&w=majority";
+
+mongoose.connect(uri)
+  .then(() => console.log('¡Conectado a la nube de MongoDB!'))
+  .catch(err => console.error('Error al conectar:', err));
+
+// Definimos cómo se ve un producto en nuestra base de datos
+const Producto = mongoose.model('Producto', {
+    nombre: String,
+    precio: Number,
+    imagen: String
+});
 
 app.use(express.json());
 app.use(express.static('.')); 
@@ -17,17 +33,19 @@ app.use('/uploads', express.static('uploads'));
 const db = new sqlite3.Database('./tienda.db');
 db.run("CREATE TABLE IF NOT EXISTS productos (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT, precio REAL, imagen TEXT)");
 
-app.get('/productos', (req, res) => {
-    db.all("SELECT * FROM productos", [], (err, rows) => res.json(rows));
+app.get('/productos', async (req, res) => {
+    const productos = await Producto.find();
+    res.json(productos);
 });
 
-app.post('/productos', upload.single('imagen'), (req, res) => {
-    const { nombre, precio } = req.body;
-    const imagenPath = '/uploads/' + req.file.filename;
-    db.run("INSERT INTO productos (nombre, precio, imagen) VALUES (?, ?, ?)", [nombre, precio, imagenPath], (err) => {
-        if (err) return res.status(500).send(err.message);
-        res.send("Producto guardado");
+app.post('/productos', upload.single('imagen'), async (req, res) => {
+    const nuevoProducto = new Producto({
+        nombre: req.body.nombre,
+        precio: req.body.precio,
+        imagen: '/uploads/' + req.file.filename
     });
+    await nuevoProducto.save();
+    res.send("Producto guardado en la nube");
 });
 
 app.post('/login', (req, res) => {
