@@ -134,3 +134,6 @@ function agregarAlCarrito(precio) {
 }
 
 document.addEventListener('DOMContentLoaded', () => mostrarVista('comprador'));
+
+
+// Forzando actualizacion de Git - Intento 1
