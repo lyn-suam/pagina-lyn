@@ -11,8 +11,12 @@ function mostrarVista(vista) {
 }
 
 
+// Versión protegida para evitar que rompa la página si el modal no se encuentra
 function cerrarModal() {
-    document.getElementById('login-modal').style.display = 'none';
+    const modal = document.getElementById('login-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
 }
 
 // Verificar credenciales desde el modal
@@ -95,7 +99,10 @@ async function subirProducto() {
     
     await fetch('/productos', { method: 'POST', body: formData });
     alert("Producto guardado exitosamente");
-    mostrarVista('comprador'); // Redirige al catálogo general para ver el resultado
+    
+    // Forzamos a que limpie el formulario y recargue la vista del comprador limpia
+    cerrarModal(); 
+    mostrarVista('comprador');
 }
 
 function agregarAlCarrito(precio) {
