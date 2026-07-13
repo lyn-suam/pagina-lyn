@@ -89,10 +89,13 @@ app.post('/productos', upload.single('imagen'), async (req, res) => {
         return res.status(201).json(productoGuardado); 
         
     } catch (err) {
-        console.error("💥 ERROR DETECTADO EN EL PROCESO:", err.message);
-        console.error("Detalle completo del error:", err);
-        return res.status(500).send("Error interno en la nube: " + err.message);
+    // Esto rompe el [object Object] y obliga a Render a mostrar el texto real
+    console.error("💥 ERROR DETECTADO EN LA NUBE:", JSON.stringify(err, null, 2));
+    console.error("💥 MENSAJE CORTO:", err.message);
+    
+    return res.status(500).send("Error interno: " + err.message);
     }
+    
 });
 
 // 3. LOGIN
