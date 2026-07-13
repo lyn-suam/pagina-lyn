@@ -5,9 +5,7 @@ function mostrarVista(vista) {
     if (vista === 'vendedor') {
         document.getElementById('login-modal').style.display = 'flex';
     } else {
-        // Lógica normal de comprador
-        const app = document.getElementById('app');
-        app.innerHTML = `<h1>Catálogo</h1><div id="productos-grid" class="grid"></div>`;
+    // En lugar de borrar todo el HTML con innerHTML, solo mandamos a llamar los productos
         cargarProductos();
     }
 }
