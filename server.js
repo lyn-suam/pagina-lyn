@@ -3,21 +3,22 @@ const multer = require('multer');
 const mongoose = require('mongoose');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const path = require('path'); // Requerido para manejar rutas de archivos de forma segura
 
 const app = express();
 
-// CONFIGURACIÓN DE CLOUDINARY (Pon tus datos aquí)
+// CONFIGURACIÓN DE CLOUDINARY
 cloudinary.config({ 
   cloud_name: 'pzgr0js', 
   api_key: '336281365133553', 
-  api_secret: 'qs2Fano3P1BSu1B5ThOC1-0Re9Y' // <-- Pega aquí lo que sale al dar clic en Revelar
+  api_secret: 'qs2Fano3P1BSu1B5ThOC1-0Re9Y' 
 });
 
-// Configurar Multer para que envíe los archivos directo a Cloudinary
+// Configurar Multer para enviar los archivos directo a Cloudinary
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: 'tienda_productos', // Nombre de la carpeta que se creará en Cloudinary
+    folder: 'tienda_productos', 
     allowed_formats: ['jpg', 'png', 'jpeg', 'webp']
   },
 });
@@ -37,12 +38,18 @@ const Producto = mongoose.model('Producto', {
     imagen: String
 });
 
-// Middlewares
-/*
-app.use(express.json());
-app.use(express.static('.')); 
-app.use('/uploads', express.static('uploads'));
-*/
+// --- MIDDLEWARES (¡Reactivados y Corregidos!) ---
+app.use(express.json()); // Permite que Express entienda los datos JSON que envía tu frontend
+
+// Sirve todos los archivos de la carpeta principal (HTML, CSS, JS del cliente)
+app.use(express.static(path.join(__dirname, '.'))); 
+
+// RUTA RAÍZ: Asegura el envío de tu interfaz visual principal cuando cargue el link de Render
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+
 // --- RUTAS DE LA API ---
 
 // 1. OBTENER PRODUCTOS (MongoDB)
@@ -55,14 +62,16 @@ app.get('/productos', async (req, res) => {
     }
 });
 
-// 2. CREAR PRODUCTO (MongoDB)
-// CREAR PRODUCTO (Subiendo imagen a Cloudinary de forma permanente)
+// 2. CREAR PRODUCTO (MongoDB + Cloudinary)
 app.post('/productos', upload.single('imagen'), async (req, res) => {
     try {
+        if (!req.file) {
+            return res.status(400).send("No se subió ninguna imagen");
+        }
         const nuevoProducto = new Producto({
             nombre: req.body.nombre,
             precio: req.body.precio,
-            imagen: req.file.path // <-- Cloudinary nos da la URL directa aquí automáticamente
+            imagen: req.file.path // La URL segura que nos genera Cloudinary de forma permanente
         });
         await nuevoProducto.save();
         res.send("Producto guardado en la nube de forma permanente");
@@ -82,11 +91,10 @@ app.post('/login', (req, res) => {
     }
 });
 
-// 4. ELIMINAR PRODUCTO (Migrado de SQLite a MongoDB)
+// 4. ELIMINAR PRODUCTO (MongoDB)
 app.delete('/productos/:id', async (req, res) => {
     try {
         const id = req.params.id;
-        // En MongoDB usamos findByIdAndDelete con el ID único de la nube
         await Producto.findByIdAndDelete(id); 
         res.send("Producto eliminado de la nube");
     } catch (err) {
