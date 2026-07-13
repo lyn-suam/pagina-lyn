@@ -12,7 +12,8 @@ function mostrarVista(vista) {
                 <div id="productos-grid" class="grid"></div>
             `;
         }
-        cargarProductos();
+        // Le damos 50 milisegundos al navegador para que dibuje el grid antes de cargar los productos
+        setTimeout(() => cargarProductos(), 50);
     }
 }
 
@@ -41,7 +42,7 @@ async function verificarLogin() {
         
         const app = document.getElementById('app');
         if (app) {
-            // Inyectamos de forma segura el formulario arriba y el grid abajo
+            // Inyectamos el formulario arriba y el nuevo grid abajo
             app.innerHTML = `
                 <div class="form-container" style="margin: 30px auto; text-align: center; max-width: 420px; padding: 30px; border-radius: 15px; background: rgba(255, 255, 255, 0.95); box-shadow: 0 4px 15px rgba(0,0,0,0.2); color: #333; font-family: sans-serif;">
                     <h1 style="color: #ae2012; margin-bottom: 20px; font-size: 24px;">Panel de Administración</h1>
@@ -63,7 +64,7 @@ async function verificarLogin() {
             `;
         }
         
-        // Cargamos los productos con los botones de eliminar activos
+        // Esperamos un instante a que se dibuje el nuevo grid antes de cargar los productos
         setTimeout(() => cargarProductos(true), 100);
     } else {
         alert("Credenciales incorrectas");
@@ -77,7 +78,11 @@ async function cargarProductos(esVendedor = false) {
         const productos = await res.json();
         const grid = document.getElementById('productos-grid');
         
-        if (!grid) return; // Protección para que no rompa la consola
+        // PROTECCIÓN CRÍTICA: Si el grid aún no se dibuja en el HTML, reintentamos en 50ms en lugar de romper la app
+        if (!grid) {
+            setTimeout(() => cargarProductos(esVendedor), 50);
+            return;
+        }
         
         grid.innerHTML = productos.map(p => `
             <div class="producto-card">
@@ -123,8 +128,8 @@ async function subirProducto() {
     await fetch('/productos', { method: 'POST', body: formData });
     alert("Producto guardado exitosamente");
     
-    // Forzamos un refresco completo para limpiar el formulario y renderizar la tienda de comprador de manera limpia
-    window.location.reload();
+    // Al limpiar, volvemos a la vista comprador de forma limpia
+    mostrarVista('comprador');
 }
 
 function agregarAlCarrito(precio) {
@@ -132,5 +137,5 @@ function agregarAlCarrito(precio) {
     document.getElementById('total-display').innerText = `S/ ${carritoTotal.toFixed(2)}`;
 }
 
-// Arranca mostrando el catálogo limpio del comprador al abrir la página
+// Arranca mostrando el catálogo limpio al abrir la página
 document.addEventListener('DOMContentLoaded', () => mostrarVista('comprador'));
