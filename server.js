@@ -3,7 +3,7 @@ const multer = require('multer');
 const mongoose = require('mongoose');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
-const path = require('path'); // Requerido para manejar rutas de archivos de forma segura
+const path = require('path'); 
 
 const app = express();
 
@@ -25,7 +25,6 @@ const storage = new CloudinaryStorage({
 const upload = multer({ storage });
 
 // Conexión a la nube de MongoDB Atlas
-
 const uri = "mongodb+srv://esuam30:jajajaok.@cluster0.tphf9.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
 mongoose.connect(uri)
@@ -39,19 +38,13 @@ const Producto = mongoose.model('Producto', {
     imagen: String
 });
 
-// --- MIDDLEWARES (¡Reactivados y Corregidos!) ---
-app.use(express.json()); // Permite que Express entienda los datos JSON que envía tu frontend
-
-// Sirve todos los archivos de la carpeta principal (HTML, CSS, JS del cliente)
+// --- MIDDLEWARES ---
+app.use(express.json()); 
 app.use(express.static(path.join(__dirname, '.'))); 
 
-// RUTA RAÍZ: Asegura el envío de tu interfaz visual principal cuando cargue el link de Render
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
-
-
-// --- RUTAS DE LA API ---
 
 // 1. OBTENER PRODUCTOS (MongoDB)
 app.get('/productos', async (req, res) => {
@@ -69,10 +62,11 @@ app.post('/productos', upload.single('imagen'), async (req, res) => {
         if (!req.file) {
             return res.status(400).send("No se subió ninguna imagen");
         }
+        // CORRECCIÓN: Aseguramos que el precio sea tratado como número puro
         const nuevoProducto = new Producto({
             nombre: req.body.nombre,
-            precio: req.body.precio,
-            imagen: req.file.path // La URL segura que nos genera Cloudinary de forma permanente
+            precio: Number(req.body.precio), 
+            imagen: req.file.path 
         });
         await nuevoProducto.save();
         res.send("Producto guardado en la nube de forma permanente");
@@ -82,7 +76,7 @@ app.post('/productos', upload.single('imagen'), async (req, res) => {
     }
 });
 
-// 3. LOGIN (Fijo en código)
+// 3. LOGIN
 app.post('/login', (req, res) => {
     const { usuario, password } = req.body;
     if (usuario === "admin" && password === "1234") {
@@ -92,7 +86,7 @@ app.post('/login', (req, res) => {
     }
 });
 
-// 4. ELIMINAR PRODUCTO (MongoDB)
+// 4. ELIMINAR PRODUCTO
 app.delete('/productos/:id', async (req, res) => {
     try {
         const id = req.params.id;
@@ -103,6 +97,5 @@ app.delete('/productos/:id', async (req, res) => {
     }
 });
 
-// Puerto dinámico para Render
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}`));

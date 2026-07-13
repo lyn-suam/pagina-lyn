@@ -1,23 +1,22 @@
 let carritoTotal = 0;
 
-// Alternar vistas limpiando y estructurando el contenedor principal
+// Manejo de Vistas sincronizado
 function mostrarVista(vista) {
     if (vista === 'vendedor') {
         document.getElementById('login-modal').style.display = 'flex';
     } else {
         const app = document.getElementById('app');
         if (app) {
+            // Reestablecemos el layout nativo del comprador de forma limpia
             app.innerHTML = `
                 <h1>Bienvenido a la Tienda</h1>
                 <div id="productos-grid" class="grid"></div>
             `;
         }
-        // Le damos 50 milisegundos al navegador para que dibuje el grid antes de cargar los productos
-        setTimeout(() => cargarProductos(), 50);
+        setTimeout(() => cargarProductos(false), 50);
     }
 }
 
-// Cerrar el modal de login de forma segura
 function cerrarModal() {
     const modal = document.getElementById('login-modal');
     if (modal) {
@@ -25,7 +24,7 @@ function cerrarModal() {
     }
 }
 
-// Verificar credenciales e inyectar panel de administración
+// Login del Administrador
 async function verificarLogin() {
     const usuario = document.getElementById('login-user').value;
     const password = document.getElementById('login-pass').value;
@@ -39,103 +38,84 @@ async function verificarLogin() {
     const data = await res.json();
     if (data.success) {
         cerrarModal();
-        
         const app = document.getElementById('app');
         if (app) {
-            // Inyectamos el formulario arriba y el nuevo grid abajo
+            // Colocamos el formulario administrativo arriba y la grilla abajo
             app.innerHTML = `
-                <div class="form-container" style="margin: 30px auto; text-align: center; max-width: 420px; padding: 30px; border-radius: 15px; background: rgba(255, 255, 255, 0.95); box-shadow: 0 4px 15px rgba(0,0,0,0.2); color: #333; font-family: sans-serif;">
-                    <h1 style="color: #ae2012; margin-bottom: 20px; font-size: 24px;">Panel de Administración</h1>
-                    <p style="color: #666; margin-bottom: 15px;">Introduce los datos del nuevo producto:</p>
-                    
-                    <input id="nombre" placeholder="Nombre del producto" style="margin: 8px 0; padding: 10px; width: 85%; border: 1px solid #ccc; border-radius: 5px; font-size: 14px;"><br>
-                    <input id="precio" type="number" placeholder="Precio (S/)" style="margin: 8px 0; padding: 10px; width: 85%; border: 1px solid #ccc; border-radius: 5px; font-size: 14px;"><br>
-                    
-                    <div style="margin: 15px 0; text-align: left; padding-left: 8%;">
-                        <label style="font-size: 12px; color: #555; display: block; margin-bottom: 5px;">Imagen del producto:</label>
-                        <input type="file" id="fileInput" style="font-size: 13px;">
-                    </div>
-                    
-                    <button onclick="subirProducto()" style="padding: 12px 25px; background-color: #1e88e5; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 15px; font-size: 15px; font-weight: bold; width: 90%;">
-                        🚀 Guardar y Publicar Producto
-                    </button>
+                <div class="form-container" style="margin: 20px auto; text-align: center; max-width: 400px; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background: #fff; color: #333;">
+                    <h1>Nuevo Producto</h1>
+                    <input id="nombre" placeholder="Nombre" style="margin: 5px; padding: 8px; width: 80%;"><br>
+                    <input id="precio" type="number" placeholder="Precio" style="margin: 5px; padding: 8px; width: 80%;"><br>
+                    <input type="file" id="fileInput" style="margin: 5px; padding: 8px; width: 80%;"><br>
+                    <button onclick="subirProducto()" style="padding: 10px 20px; margin-top: 10px; cursor: pointer;">Guardar Producto</button>
                 </div>
-                <div id="productos-grid" class="grid" style="margin-top: 40px;"></div>
+                <div id="productos-grid" class="grid"></div>
             `;
         }
-        
-        // Esperamos un instante a que se dibuje el nuevo grid antes de cargar los productos
-        setTimeout(() => cargarProductos(true), 100);
+        setTimeout(() => cargarProductos(true), 50);
     } else {
         alert("Credenciales incorrectas");
     }
 }
 
-// Cargar productos desde MongoDB Atlas
+// Cargar productos en la grilla dinámica
 async function cargarProductos(esVendedor = false) {
     try {
         const res = await fetch('/productos');
         const productos = await res.json();
         const grid = document.getElementById('productos-grid');
         
-        // PROTECCIÓN CRÍTICA: Si el grid aún no se dibuja en el HTML, reintentamos en 50ms en lugar de romper la app
-        if (!grid) {
-            setTimeout(() => cargarProductos(esVendedor), 50);
-            return;
-        }
+        if (!grid) return; // Validación de seguridad
         
         grid.innerHTML = productos.map(p => `
             <div class="producto-card">
                 <img src="${p.imagen}" style="width:150px; height:150px; border-radius:10px; object-fit: cover;">
                 <h3>${p.nombre}</h3>
-                <p class="price">S/ ${p.precio}</p>
+                <p class="price">S/ ${Number(p.precio).toFixed(2)}</p>
                 <button onclick="agregarAlCarrito(${p.precio})">Agregar al Carrito</button>
                 ${esVendedor ? `<button class="btn-eliminar" onclick="eliminarProducto('${p._id}')" style="background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; margin-top: 5px; cursor: pointer;">Eliminar</button>` : ''}
             </div>
         `).join('');
     } catch (error) {
-        console.error("Error al renderizar los productos:", error);
+        console.error("Error al obtener o renderizar productos:", error);
     }
 }
 
-// Función para eliminar usando el _id de MongoDB
+// Eliminar Producto
 async function eliminarProducto(id) {
     if (confirm("¿Estás seguro de eliminar este producto?")) {
         await fetch(`/productos/${id}`, { method: 'DELETE' });
         alert("Producto eliminado");
-        
-        const formularioExiste = document.getElementById('nombre') !== null;
-        cargarProductos(formularioExiste); 
+        cargarProductos(true);
     }
 }
 
-// Subir producto a Node.js -> Cloudinary -> MongoDB
+// Subir Producto
 async function subirProducto() {
-    const nombreInput = document.getElementById('nombre').value;
-    const precioInput = document.getElementById('precio').value;
-    const fileInput = document.getElementById('fileInput').files[0];
+    const nombre = document.getElementById('nombre').value;
+    const precio = document.getElementById('precio').value;
+    const imagen = document.getElementById('fileInput').files[0];
 
-    if (!nombreInput || !precioInput || !fileInput) {
-        alert("Por favor, completa todos los campos e introduce una imagen.");
+    if (!nombre || !precio || !imagen) {
+        alert("Por favor, completa todos los campos.");
         return;
     }
 
     const formData = new FormData();
-    formData.append('nombre', nombreInput);
-    formData.append('precio', precioInput);
-    formData.append('imagen', fileInput);
-    
+    formData.append('nombre', nombre);
+    formData.append('precio', precio);
+    formData.append('imagen', imagen);
+
     await fetch('/productos', { method: 'POST', body: formData });
     alert("Producto guardado exitosamente");
     
-    // Al limpiar, volvemos a la vista comprador de forma limpia
+    // Forzamos un regreso limpio a la vista de comprador
     mostrarVista('comprador');
 }
 
 function agregarAlCarrito(precio) {
-    carritoTotal += precio;
+    carritoTotal += Number(precio);
     document.getElementById('total-display').innerText = `S/ ${carritoTotal.toFixed(2)}`;
 }
 
-// Arranca mostrando el catálogo limpio al abrir la página
 document.addEventListener('DOMContentLoaded', () => mostrarVista('comprador'));
