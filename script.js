@@ -47,40 +47,56 @@ async function verificarLogin() {
     }
 }
 
+// Cargar productos desde MongoDB Atlas
 async function cargarProductos(esVendedor = false) {
-    const res = await fetch('/productos');
-    const productos = await res.json();
-    const grid = document.getElementById('productos-grid');
-    
-    grid.innerHTML = productos.map(p => `
-        <div class="producto-card">
-            <img src="${p.imagen}" style="width:150px; height:150px; border-radius:10px;">
-            <h3>${p.nombre}</h3>
-            <p class="price">S/ ${p.precio}</p>
-            <button onclick="agregarAlCarrito(${p.precio})">Agregar al Carrito</button>
-            ${esVendedor ? `<button class="btn-eliminar" onclick="eliminarProducto(${p.id})">Eliminar</button>` : ''}
-        </div>
-    `).join('');
+    try {
+        const res = await fetch('/productos');
+        const productos = await res.json();
+        const grid = document.getElementById('productos-grid');
+        
+        // CORRECCIÓN: Se cambió p.id por p._id para que coincida con MongoDB
+        grid.innerHTML = productos.map(p => `
+            <div class="producto-card">
+                <img src="${p.imagen}" style="width:150px; height:150px; border-radius:10px; object-fit: cover;">
+                <h3>${p.nombre}</h3>
+                <p class="price">S/ ${p.precio}</p>
+                <button onclick="agregarAlCarrito(${p.precio})">Agregar al Carrito</button>
+                ${esVendedor ? `<button class="btn-eliminar" onclick="eliminarProducto('${p._id}')">Eliminar</button>` : ''}
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error("Error al renderizar los productos:", error);
+    }
 }
 
-// Función para llamar al servidor y borrar
+// Función para llamar al servidor y borrar usando el _id de MongoDB
 async function eliminarProducto(id) {
     if (confirm("¿Estás seguro de eliminar este producto?")) {
         await fetch(`/productos/${id}`, { method: 'DELETE' });
         alert("Producto eliminado");
-        cargarProductos(true); // Recargar la lista
+        cargarProductos(true); // Recargar la lista en vista vendedor
     }
 }
 
+// Subir producto a Node.js -> Cloudinary -> MongoDB
 async function subirProducto() {
+    const nombreInput = document.getElementById('nombre').value;
+    const precioInput = document.getElementById('precio').value;
+    const fileInput = document.getElementById('fileInput').files[0];
+
+    if (!nombreInput || !precioInput || !fileInput) {
+        alert("Por favor, completa todos los campos e introduce una imagen.");
+        return;
+    }
+
     const formData = new FormData();
-    formData.append('nombre', document.getElementById('nombre').value);
-    formData.append('precio', document.getElementById('precio').value);
-    formData.append('imagen', document.getElementById('fileInput').files[0]);
+    formData.append('nombre', nombreInput);
+    formData.append('precio', precioInput);
+    formData.append('imagen', fileInput);
     
     await fetch('/productos', { method: 'POST', body: formData });
     alert("Producto guardado exitosamente");
-    mostrarVista('comprador');
+    mostrarVista('comprador'); // Redirige al catálogo general para ver el resultado
 }
 
 function agregarAlCarrito(precio) {
