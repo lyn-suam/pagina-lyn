@@ -1,7 +1,6 @@
 let carritoTotal = 0;
 
 // Abrir el modal en lugar del prompt
-// Versión corregida y sin llaves duplicadas
 function mostrarVista(vista) {
     if (vista === 'vendedor') {
         document.getElementById('login-modal').style.display = 'flex';
@@ -10,8 +9,7 @@ function mostrarVista(vista) {
     }
 }
 
-
-// Versión protegida para evitar que rompa la página si el modal no se encuentra
+// Cerrar el modal de login de forma segura
 function cerrarModal() {
     const modal = document.getElementById('login-modal');
     if (modal) {
@@ -19,7 +17,7 @@ function cerrarModal() {
     }
 }
 
-// Verificar credenciales desde el modal
+// Verificar credenciales e inyectar panel de administración
 async function verificarLogin() {
     const usuario = document.getElementById('login-user').value;
     const password = document.getElementById('login-pass').value;
@@ -33,18 +31,25 @@ async function verificarLogin() {
     const data = await res.json();
     if (data.success) {
         cerrarModal();
-        const app = document.getElementById('app');
-        app.innerHTML = `
-            <div class="form-container">
-                <h1>Nuevo Producto</h1>
-                <input id="nombre" placeholder="Nombre"><br>
-                <input id="precio" type="number" placeholder="Precio"><br>
-                <input type="file" id="fileInput"><br>
-                <button onclick="subirProducto()">Guardar Producto</button>
+        
+        // CORRECCIÓN: Inyectamos el formulario directamente en el contenedor principal "productos-grid"
+        const grid = document.getElementById('productos-grid');
+        if (grid) {
+            // Reemplazamos el grid temporalmente con el formulario y un nuevo contenedor interno para las tarjetas
+            grid.parentElement.innerHTML = `
+                <div class="form-container" style="margin-bottom: 30px; text-align: center;">
+                    <h1>Nuevo Producto</h1>
+                    <input id="nombre" placeholder="Nombre" style="margin: 5px; padding: 8px;"><br>
+                    <input id="precio" type="number" placeholder="Precio" style="margin: 5px; padding: 8px;"><br>
+                    <input type="file" id="fileInput" style="margin: 5px; padding: 8px;"><br>
+                    <button onclick="subirProducto()" style="padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">Guardar Producto</button>
+                </div>
                 <div id="productos-grid" class="grid"></div>
-            </div>
-        `;        
-        cargarProductos(true);
+            `;
+        }
+        
+        // Cargamos los productos con los botones de eliminar activos
+        setTimeout(() => cargarProductos(true), 100);
     } else {
         alert("Credenciales incorrectas");
     }
@@ -57,14 +62,15 @@ async function cargarProductos(esVendedor = false) {
         const productos = await res.json();
         const grid = document.getElementById('productos-grid');
         
-        // CORRECCIÓN: Se cambió p.id por p._id para que coincida con MongoDB
+        if (!grid) return;
+        
         grid.innerHTML = productos.map(p => `
             <div class="producto-card">
                 <img src="${p.imagen}" style="width:150px; height:150px; border-radius:10px; object-fit: cover;">
                 <h3>${p.nombre}</h3>
                 <p class="price">S/ ${p.precio}</p>
                 <button onclick="agregarAlCarrito(${p.precio})">Agregar al Carrito</button>
-                ${esVendedor ? `<button class="btn-eliminar" onclick="eliminarProducto('${p._id}')">Eliminar</button>` : ''}
+                ${esVendedor ? `<button class="btn-eliminar" onclick="eliminarProducto('${p._id}')" style="background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; margin-top: 5px; cursor: pointer;">Eliminar</button>` : ''}
             </div>
         `).join('');
     } catch (error) {
@@ -77,7 +83,10 @@ async function eliminarProducto(id) {
     if (confirm("¿Estás seguro de eliminar este producto?")) {
         await fetch(`/productos/${id}`, { method: 'DELETE' });
         alert("Producto eliminado");
-        cargarProductos(true); // Recargar la lista en vista vendedor
+        
+        // Forzamos la recarga en modo vendedor para que no se pierda el formulario
+        const formularioExiste = document.getElementById('nombre') !== null;
+        cargarProductos(formularioExiste); 
     }
 }
 
@@ -100,9 +109,8 @@ async function subirProducto() {
     await fetch('/productos', { method: 'POST', body: formData });
     alert("Producto guardado exitosamente");
     
-    // Forzamos a que limpie el formulario y recargue la vista del comprador limpia
-    cerrarModal(); 
-    mostrarVista('comprador');
+    // Recarga la página completa para volver al modo comprador limpio con el nuevo catálogo actualizado
+    window.location.reload();
 }
 
 function agregarAlCarrito(precio) {
