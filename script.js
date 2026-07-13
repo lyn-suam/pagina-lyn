@@ -33,20 +33,29 @@ async function verificarLogin() {
         cerrarModal();
         
         // BUSCAMOS EL CONTENEDOR PRINCIPAL DE TU HTML
-        // Intentará buscar un <main>, si no existe buscará una sección, o el body.
+        // Intentará buscar un <main>, si no existe buscará una sección con clase container, o el body.
         const contenedorPrincipal = document.querySelector('main') || document.querySelector('.container') || document.body;
         
         if (contenedorPrincipal) {
-            // Reemplazamos el contenido de forma segura e inyectamos el formulario y el grid abajo
+            // Diseñamos un panel de administración limpio, visible y elegante
             contenedorPrincipal.innerHTML = `
-                <div class="form-container" style="margin: 20px auto; text-align: center; max-width: 400px; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background: #fff;">
-                    <h1>Nuevo Producto</h1>
-                    <input id="nombre" placeholder="Nombre" style="margin: 5px; padding: 8px; width: 80%;"><br>
-                    <input id="precio" type="number" placeholder="Precio" style="margin: 5px; padding: 8px; width: 80%;"><br>
-                    <input type="file" id="fileInput" style="margin: 5px; padding: 8px; width: 80%;"><br>
-                    <button onclick="subirProducto()" style="padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px;">Guardar Producto</button>
+                <div class="form-container" style="margin: 40px auto; text-align: center; max-width: 420px; padding: 30px; border-radius: 15px; background: rgba(255, 255, 255, 0.95); box-shadow: 0 4px 15px rgba(0,0,0,0.2); color: #333; font-family: sans-serif;">
+                    <h1 style="color: #ae2012; margin-bottom: 20px; font-size: 24px;">Panel de Administración</h1>
+                    <p style="color: #666; margin-bottom: 15px;">Introduce los datos del nuevo producto:</p>
+                    
+                    <input id="nombre" placeholder="Nombre del producto" style="margin: 8px 0; padding: 10px; width: 85%; border: 1px solid #ccc; border-radius: 5px; font-size: 14px;"><br>
+                    <input id="precio" type="number" placeholder="Precio (S/)" style="margin: 8px 0; padding: 10px; width: 85%; border: 1px solid #ccc; border-radius: 5px; font-size: 14px;"><br>
+                    
+                    <div style="margin: 15px 0; text-align: left; padding-left: 8%;">
+                        <label style="font-size: 12px; color: #555; display: block; margin-bottom: 5px;">Imagen del producto:</label>
+                        <input type="file" id="fileInput" style="font-size: 13px;">
+                    </div>
+                    
+                    <button onclick="subirProducto()" style="padding: 12px 25px; background-color: #1e88e5; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 15px; font-size: 15px; font-weight: bold; width: 90%; transition: background 0.3s;">
+                        🚀 Guardar y Publicar Producto
+                    </button>
                 </div>
-                <div id="productos-grid" class="grid"></div>
+                <div id="productos-grid" class="grid" style="margin-top: 40px;"></div>
             `;
         }
         
