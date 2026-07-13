@@ -1,10 +1,17 @@
 let carritoTotal = 0;
 
-// Abrir el modal en lugar del prompt
+// Alternar vistas limpiando y estructurando el contenedor principal
 function mostrarVista(vista) {
     if (vista === 'vendedor') {
         document.getElementById('login-modal').style.display = 'flex';
     } else {
+        const app = document.getElementById('app');
+        if (app) {
+            app.innerHTML = `
+                <h1>Bienvenido a la Tienda</h1>
+                <div id="productos-grid" class="grid"></div>
+            `;
+        }
         cargarProductos();
     }
 }
@@ -32,14 +39,11 @@ async function verificarLogin() {
     if (data.success) {
         cerrarModal();
         
-        // BUSCAMOS EL CONTENEDOR PRINCIPAL DE TU HTML
-        // Intentará buscar un <main>, si no existe buscará una sección con clase container, o el body.
-        const contenedorPrincipal = document.querySelector('main') || document.querySelector('.container') || document.body;
-        
-        if (contenedorPrincipal) {
-            // Diseñamos un panel de administración limpio, visible y elegante
-            contenedorPrincipal.innerHTML = `
-                <div class="form-container" style="margin: 40px auto; text-align: center; max-width: 420px; padding: 30px; border-radius: 15px; background: rgba(255, 255, 255, 0.95); box-shadow: 0 4px 15px rgba(0,0,0,0.2); color: #333; font-family: sans-serif;">
+        const app = document.getElementById('app');
+        if (app) {
+            // Inyectamos de forma segura el formulario arriba y el grid abajo
+            app.innerHTML = `
+                <div class="form-container" style="margin: 30px auto; text-align: center; max-width: 420px; padding: 30px; border-radius: 15px; background: rgba(255, 255, 255, 0.95); box-shadow: 0 4px 15px rgba(0,0,0,0.2); color: #333; font-family: sans-serif;">
                     <h1 style="color: #ae2012; margin-bottom: 20px; font-size: 24px;">Panel de Administración</h1>
                     <p style="color: #666; margin-bottom: 15px;">Introduce los datos del nuevo producto:</p>
                     
@@ -51,7 +55,7 @@ async function verificarLogin() {
                         <input type="file" id="fileInput" style="font-size: 13px;">
                     </div>
                     
-                    <button onclick="subirProducto()" style="padding: 12px 25px; background-color: #1e88e5; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 15px; font-size: 15px; font-weight: bold; width: 90%; transition: background 0.3s;">
+                    <button onclick="subirProducto()" style="padding: 12px 25px; background-color: #1e88e5; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 15px; font-size: 15px; font-weight: bold; width: 90%;">
                         🚀 Guardar y Publicar Producto
                     </button>
                 </div>
@@ -59,8 +63,8 @@ async function verificarLogin() {
             `;
         }
         
-        // Esperamos un instante a que se dibuje el nuevo grid y cargamos los productos como vendedor
-        setTimeout(() => cargarProductos(true), 150);
+        // Cargamos los productos con los botones de eliminar activos
+        setTimeout(() => cargarProductos(true), 100);
     } else {
         alert("Credenciales incorrectas");
     }
@@ -73,8 +77,7 @@ async function cargarProductos(esVendedor = false) {
         const productos = await res.json();
         const grid = document.getElementById('productos-grid');
         
-        // Si por alguna razón el grid no existe en este milisegundo, detenemos la función sin romper nada
-        if (!grid) return;
+        if (!grid) return; // Protección para que no rompa la consola
         
         grid.innerHTML = productos.map(p => `
             <div class="producto-card">
@@ -90,13 +93,12 @@ async function cargarProductos(esVendedor = false) {
     }
 }
 
-// Función para llamar al servidor y borrar usando el _id de MongoDB
+// Función para eliminar usando el _id de MongoDB
 async function eliminarProducto(id) {
     if (confirm("¿Estás seguro de eliminar este producto?")) {
         await fetch(`/productos/${id}`, { method: 'DELETE' });
         alert("Producto eliminado");
         
-        // Validamos si el formulario sigue en pantalla para saber si recargar en modo vendedor
         const formularioExiste = document.getElementById('nombre') !== null;
         cargarProductos(formularioExiste); 
     }
@@ -121,7 +123,7 @@ async function subirProducto() {
     await fetch('/productos', { method: 'POST', body: formData });
     alert("Producto guardado exitosamente");
     
-    // Recarga la página completa para volver al modo comprador limpio con el catálogo actualizado
+    // Forzamos un refresco completo para limpiar el formulario y renderizar la tienda de comprador de manera limpia
     window.location.reload();
 }
 
@@ -130,4 +132,5 @@ function agregarAlCarrito(precio) {
     document.getElementById('total-display').innerText = `S/ ${carritoTotal.toFixed(2)}`;
 }
 
+// Arranca mostrando el catálogo limpio del comprador al abrir la página
 document.addEventListener('DOMContentLoaded', () => mostrarVista('comprador'));
