@@ -64,24 +64,33 @@ app.get('/productos', async (req, res) => {
     }
 });
 
-// 2. CREAR PRODUCTO (MongoDB Atlas + Cloudinary)
+
+// 2. CREAR PRODUCTO (Ruta auditada con Logs detallados)
 app.post('/productos', upload.single('imagen'), async (req, res) => {
+    console.log("=== 📥 NUEVA PETICIÓN DETECTADA EN /PRODUCTOS ===");
+    console.log("Cuerpo del formulario (body):", req.body);
+    console.log("Archivo recibido (file):", req.file);
+
     try {
         if (!req.file) {
+            console.log("❌ Alerta: No llegó ningún archivo de imagen a la ruta.");
             return res.status(400).send("Error: No se recibió ningún archivo de imagen.");
         }
         
+        console.log("⏳ Intentando guardar los datos del producto en MongoDB Atlas...");
         const nuevoProducto = new Producto({
             nombre: req.body.nombre,
             precio: Number(req.body.precio), 
-            imagen: req.file.path // La URL segura https://res.cloudinary.com/...
+            imagen: req.file.path // URL de Cloudinary
         });
 
         const productoGuardado = await nuevoProducto.save();
+        console.log("✅ ¡Producto guardado exitosamente en Atlas!", productoGuardado);
         return res.status(201).json(productoGuardado); 
         
     } catch (err) {
-        console.error("❌ ERROR EN PRODUCCIÓN:", err);
+        console.error("💥 ERROR DETECTADO EN EL PROCESO:", err.message);
+        console.error("Detalle completo del error:", err);
         return res.status(500).send("Error interno en la nube: " + err.message);
     }
 });
