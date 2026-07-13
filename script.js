@@ -1,14 +1,15 @@
 let carritoTotal = 0;
 
 // Abrir el modal en lugar del prompt
+// Versión corregida y sin llaves duplicadas
 function mostrarVista(vista) {
     if (vista === 'vendedor') {
         document.getElementById('login-modal').style.display = 'flex';
     } else {
-    // En lugar de borrar todo el HTML con innerHTML, solo mandamos a llamar los productos
         cargarProductos();
     }
 }
+
 
 function cerrarModal() {
     document.getElementById('login-modal').style.display = 'none';
