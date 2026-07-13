@@ -32,24 +32,26 @@ async function verificarLogin() {
     if (data.success) {
         cerrarModal();
         
-        // CORRECCIÓN: Inyectamos el formulario directamente en el contenedor principal "productos-grid"
-        const grid = document.getElementById('productos-grid');
-        if (grid) {
-            // Reemplazamos el grid temporalmente con el formulario y un nuevo contenedor interno para las tarjetas
-            grid.parentElement.innerHTML = `
-                <div class="form-container" style="margin-bottom: 30px; text-align: center;">
+        // BUSCAMOS EL CONTENEDOR PRINCIPAL DE TU HTML
+        // Intentará buscar un <main>, si no existe buscará una sección, o el body.
+        const contenedorPrincipal = document.querySelector('main') || document.querySelector('.container') || document.body;
+        
+        if (contenedorPrincipal) {
+            // Reemplazamos el contenido de forma segura e inyectamos el formulario y el grid abajo
+            contenedorPrincipal.innerHTML = `
+                <div class="form-container" style="margin: 20px auto; text-align: center; max-width: 400px; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background: #fff;">
                     <h1>Nuevo Producto</h1>
-                    <input id="nombre" placeholder="Nombre" style="margin: 5px; padding: 8px;"><br>
-                    <input id="precio" type="number" placeholder="Precio" style="margin: 5px; padding: 8px;"><br>
-                    <input type="file" id="fileInput" style="margin: 5px; padding: 8px;"><br>
-                    <button onclick="subirProducto()" style="padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">Guardar Producto</button>
+                    <input id="nombre" placeholder="Nombre" style="margin: 5px; padding: 8px; width: 80%;"><br>
+                    <input id="precio" type="number" placeholder="Precio" style="margin: 5px; padding: 8px; width: 80%;"><br>
+                    <input type="file" id="fileInput" style="margin: 5px; padding: 8px; width: 80%;"><br>
+                    <button onclick="subirProducto()" style="padding: 10px 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 10px;">Guardar Producto</button>
                 </div>
                 <div id="productos-grid" class="grid"></div>
             `;
         }
         
-        // Cargamos los productos con los botones de eliminar activos
-        setTimeout(() => cargarProductos(true), 100);
+        // Esperamos un instante a que se dibuje el nuevo grid y cargamos los productos como vendedor
+        setTimeout(() => cargarProductos(true), 150);
     } else {
         alert("Credenciales incorrectas");
     }
@@ -62,6 +64,7 @@ async function cargarProductos(esVendedor = false) {
         const productos = await res.json();
         const grid = document.getElementById('productos-grid');
         
+        // Si por alguna razón el grid no existe en este milisegundo, detenemos la función sin romper nada
         if (!grid) return;
         
         grid.innerHTML = productos.map(p => `
@@ -84,7 +87,7 @@ async function eliminarProducto(id) {
         await fetch(`/productos/${id}`, { method: 'DELETE' });
         alert("Producto eliminado");
         
-        // Forzamos la recarga en modo vendedor para que no se pierda el formulario
+        // Validamos si el formulario sigue en pantalla para saber si recargar en modo vendedor
         const formularioExiste = document.getElementById('nombre') !== null;
         cargarProductos(formularioExiste); 
     }
@@ -109,7 +112,7 @@ async function subirProducto() {
     await fetch('/productos', { method: 'POST', body: formData });
     alert("Producto guardado exitosamente");
     
-    // Recarga la página completa para volver al modo comprador limpio con el nuevo catálogo actualizado
+    // Recarga la página completa para volver al modo comprador limpio con el catálogo actualizado
     window.location.reload();
 }
 
