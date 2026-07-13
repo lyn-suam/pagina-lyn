@@ -1,29 +1,31 @@
 const express = require('express');
-const multer = require('multer');
 const mongoose = require('mongoose');
-const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const path = require('path'); 
 const fs = require('fs'); 
 
 const app = express();
 
-// --- CONFIGURACIÓN DE CLOUDINARY ---
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const multer = require('multer');
+
+// --- CONEXIÓN DIRECTA Y SEGURA CON CLOUDINARY ---
 cloudinary.config({ 
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'pzgr0js', 
-  api_key: process.env.CLOUDINARY_API_KEY || '336281365133553', 
-  api_secret: process.env.CLOUDINARY_API_SECRET || 'qs2Fano3P1BSu1B5ThOC1-0Re9Y' 
+  cloud_name: 'pzgr0js', 
+  api_key: '336281365133553', 
+  api_secret: 'qs2Fano3P1BSu1B5ThOC1-0Re9Y' 
 });
 
-// Configurar Multer para enviar los archivos directo a Cloudinary (Acepta cualquier formato en Render)
+// --- CONFIGURACIÓN DEL ALMACENAMIENTO ---
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: 'tienda_productos', 
-    allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'jfif']
+    folder: 'tienda_lyn', // Crea una carpeta organizada en tu cuenta de Cloudinary
+    allowed_formats: ['jpg', 'png', 'jpeg', 'jfif', 'webp'], // Permite audios.jfif sin problemas
   },
 });
-const upload = multer({ storage });
+
+const upload = multer({ storage: storage });
 
 // --- CONFIGURACIÓN DE MONGODB ATLAS (PRODUCCIÓN REAL) ---
 // ⚠️ REEMPLAZA ESTE ENLACE POR TU STRING DE CONEXIÓN DE MONGODB ATLAS
@@ -95,7 +97,7 @@ app.post('/productos', upload.single('imagen'), async (req, res) => {
     
     return res.status(500).send("Error interno: " + err.message);
     }
-    
+
 });
 
 // 3. LOGIN
