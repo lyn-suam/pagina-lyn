@@ -1,16 +1,16 @@
 let carritoTotal = 0;
 
-// Alternar vistas controlando la visibilidad nativa de los elementos
 function mostrarVista(vista) {
-    const titulo = document.getElementById('titulo-pagina');
-    const formulario = document.getElementById('admin-form-container');
-    
+    const app = document.getElementById('app');
+    if (!app) return;
+
     if (vista === 'vendedor') {
         document.getElementById('login-modal').style.display = 'flex';
     } else {
-        // Modo Comprador: Ocultamos formulario y mostramos catálogo
-        if (titulo) titulo.innerText = "Bienvenido a la Tienda";
-        if (formulario) formulario.style.display = 'none';
+        app.innerHTML = `
+            <h1 style="text-align: center; margin-top: 20px;">Catálogo de Productos</h1>
+            <div id="productos-grid" class="grid"></div>
+        `;
         cerrarModal();
         cargarProductos(false);
     }
@@ -18,12 +18,9 @@ function mostrarVista(vista) {
 
 function cerrarModal() {
     const modal = document.getElementById('login-modal');
-    if (modal) {
-        modal.style.display = 'none';
-    }
+    if (modal) modal.style.display = 'none';
 }
 
-// Iniciar sesión como administrador
 async function verificarLogin() {
     const usuario = document.getElementById('login-user').value;
     const password = document.getElementById('login-pass').value;
@@ -37,36 +34,45 @@ async function verificarLogin() {
     const data = await res.json();
     if (data.success) {
         cerrarModal();
+        const app = document.getElementById('app');
         
-        const titulo = document.getElementById('titulo-pagina');
-        const formulario = document.getElementById('admin-form-container');
-        
-        // Activamos la interfaz de vendedor de forma limpia sin romper el DOM
-        if (titulo) titulo.innerText = "Panel de Administración";
-        if (formulario) formulario.style.display = 'flex';
-        
-        cargarProductos(true); // Carga los productos con botones de eliminar
+        app.innerHTML = `
+            <div class="form-container" style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 400px; margin: 20px auto;">
+                <h2>Nuevo Producto</h2>
+                <input id="nombre" placeholder="Nombre" style="width:90%; padding:8px; margin-bottom:10px;"><br>
+                <input id="precio" type="number" placeholder="Precio" style="width:90%; padding:8px; margin-bottom:10px;"><br>
+                <input type="file" id="fileInput" style="margin-bottom:15px;"><br>
+                <button class="btn-guardar" type="button" onclick="subirProducto(event)" style="padding:10px 20px; cursor:pointer;">Guardar Producto</button>
+            </div>
+            <h2 style="text-align:center; margin-top:30px;">Tus Productos (Modo Administrador)</h2>
+            <div id="productos-grid" class="grid"></div>
+        `;        
+        cargarProductos(true);
     } else {
         alert("Credenciales incorrectas");
     }
 }
 
-// Cargar productos en la grilla dinámica desde MongoDB Atlas
 async function cargarProductos(esVendedor = false) {
     try {
         const res = await fetch('/productos');
         const productos = await res.json();
         const grid = document.getElementById('productos-grid');
         
-        if (!grid) return; // Validación de seguridad
+        if (!grid) return;
         
+        if (productos.length === 0) {
+            grid.innerHTML = `<p style="text-align:center; grid-column: 1/-1; color: gray; margin-top: 20px;">No hay productos registrados.</p>`;
+            return;
+        }
+
         grid.innerHTML = productos.map(p => `
             <div class="producto-card">
                 <img src="${p.imagen}" style="width:150px; height:150px; border-radius:10px; object-fit: cover;">
                 <h3>${p.nombre}</h3>
                 <p class="price">S/ ${Number(p.precio).toFixed(2)}</p>
                 <button onclick="agregarAlCarrito(${p.precio})">Agregar al Carrito</button>
-                ${esVendedor ? `<br><button class="btn-eliminar" onclick="eliminarProducto('${p._id}')">Eliminar</button>` : ''}
+                ${esVendedor ? `<br><button class="btn-eliminar" style="margin-top:5px; background:#ff4d4d; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;" onclick="eliminarProducto('${p._id}')">Eliminar</button>` : ''}
             </div>
         `).join('');
     } catch (error) {
@@ -74,22 +80,21 @@ async function cargarProductos(esVendedor = false) {
     }
 }
 
-// Eliminar Producto usando el _id único de MongoDB
 async function eliminarProducto(id) {
     if (confirm("¿Estás seguro de eliminar este producto?")) {
         await fetch(`/productos/${id}`, { method: 'DELETE' });
         alert("Producto eliminado");
-        
-        // Verificamos en qué modo estamos para recargar correctamente
-        const formulario = document.getElementById('admin-form-container');
-        const esVendedor = formulario && formulario.style.display === 'flex';
-        cargarProductos(esVendedor);
+        cargarProductos(true); 
     }
 }
 
-// Subir nuevo producto a Cloudinary y MongoDB Atlas
-async function subirProducto() {
-    const nombre = document.getElementById('nombre').value;
+async function subirProducto(e) {
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    const nombre = document.getElementById('nombre').value.trim();
     const precio = document.getElementById('precio').value;
     const imagen = document.getElementById('fileInput').files[0];
 
@@ -103,16 +108,24 @@ async function subirProducto() {
     formData.append('precio', precio);
     formData.append('imagen', imagen);
 
-    await fetch('/productos', { method: 'POST', body: formData });
-    alert("Producto guardado exitosamente");
-    
-    // Limpiamos los campos del formulario anterior
-    document.getElementById('nombre').value = '';
-    document.getElementById('precio').value = '';
-    document.getElementById('fileInput').value = '';
-    
-    // Regresamos fluidamente a la vista de comprador
-    mostrarVista('comprador');
+    try {
+        console.log("⏳ Guardando imagen localmente y registrando en la base de datos...");
+        const respuesta = await fetch('/productos', { method: 'POST', body: formData });
+        
+        if (respuesta.ok) {
+            alert("¡Producto guardado exitosamente!");
+            
+            setTimeout(() => {
+                mostrarVista('comprador');
+            }, 400);
+        } else {
+            const errorTxt = await respuesta.text();
+            alert("Hubo un problema en el servidor: " + errorTxt);
+        }
+    } catch (error) {
+        console.error("Error al subir el producto:", error);
+        alert("Error de red al conectar con el servidor.");
+    }
 }
 
 function agregarAlCarrito(precio) {
@@ -120,5 +133,4 @@ function agregarAlCarrito(precio) {
     document.getElementById('total-display').innerText = `S/ ${carritoTotal.toFixed(2)}`;
 }
 
-// Inicializar la carga por primera vez
 document.addEventListener('DOMContentLoaded', () => mostrarVista('comprador'));

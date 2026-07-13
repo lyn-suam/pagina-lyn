@@ -13,6 +13,8 @@
   "dependencies": {
     "cloudinary": "^1.41.3",
     "express": "^5.2.1",
+    "mongodb": "^7.5.0",
+    "mongodb-memory-server": "^11.2.0",
     "mongoose": "^9.7.4",
     "multer": "^2.2.0",
     "multer-storage-cloudinary": "^4.0.0"

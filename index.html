@@ -6,7 +6,6 @@
     <title>LYN Store</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Pequeño ajuste para que los enlaces de la barra se vean en línea */
         .navbar nav ul { display: flex; list-style: none; margin: 0; padding: 0; }
         .navbar nav ul li { margin-left: 15px; }
     </style>
@@ -16,8 +15,8 @@
         <div class="logo">LYN Store</div>
         <nav>
             <ul>
-                <li><a href="#" onclick="mostrarVista('comprador')">Tienda</a></li>
-                <li><a href="#" onclick="mostrarVista('vendedor')">Agregar producto</a></li>
+                <li><a style="cursor: pointer;" onclick="mostrarVista('comprador')">Tienda</a></li>
+                <li><a style="cursor: pointer;" onclick="mostrarVista('vendedor')">Agregar producto</a></li>
             </ul>
         </nav>
         <div class="cart-summary">
@@ -25,18 +24,9 @@
         </div>
     </header>
 
-    <main class="container">
-        <h1 id="titulo-pagina" style="text-align: center; margin-top: 20px;">Bienvenido a la Tienda</h1>
-        
-        <div id="admin-form-container" class="form-container" style="display: none; background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            <h2>Nuevo Producto</h2>
-            <input id="nombre" placeholder="Nombre"><br>
-            <input id="precio" type="number" placeholder="Precio"><br>
-            <input type="file" id="fileInput"><br>
-            <button class="btn-guardar" onclick="subirProducto()">Guardar Producto</button>
-        </div>
-
-        <div id="productos-grid" class="grid"></div>
+    <main id="app" class="container">
+        <h1>Bienvenido a la Tienda</h1>
+        <p>Selecciona una opción arriba para comenzar.</p>
     </main>
 
     <div id="login-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); justify-content:center; align-items:center; z-index:1000;">
