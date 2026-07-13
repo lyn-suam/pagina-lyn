@@ -9,29 +9,23 @@ const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const multer = require('multer');
 
-// 1. CONFIGURACIÓN EXPLICITA
+// --- CONEXIÓN DIRECTA Y SEGURA CON CLOUDINARY ---
 cloudinary.config({ 
   cloud_name: 'pzgr0js', 
   api_key: '336281365133553', 
   api_secret: 'qs2Fano3P1BSu1B5ThOC1-0Re9Y' 
 });
 
-// 2. FILTRO DE PRUEBA: Forzamos a capturar el error exacto de subida
+// --- CONFIGURACIÓN DEL ALMACENAMIENTO ---
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: async (req, file) => {
-    console.log("✈️ Multer está intentando enviar el archivo a Cloudinary:", file.originalname);
-    return {
-      folder: 'tienda_lyn',
-      allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'jfif']
-    };
-  }
+  params: {
+    folder: 'tienda_lyn', // Crea una carpeta organizada en tu cuenta de Cloudinary
+    allowed_formats: ['jpg', 'png', 'jpeg', 'jfif', 'webp'], // Permite audios.jfif sin problemas
+  },
 });
 
-// 3. CAPTURADOR DE ERRORES INTERNOS DE MULTER
-const upload = multer({ 
-  storage: storage 
-}).single('imagen');
+const upload = multer({ storage: storage });
 
 // --- CONFIGURACIÓN DE MONGODB ATLAS (PRODUCCIÓN REAL) ---
 // ⚠️ REEMPLAZA ESTE ENLACE POR TU STRING DE CONEXIÓN DE MONGODB ATLAS
