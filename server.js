@@ -91,11 +91,15 @@ app.post('/productos', upload.single('imagen'), async (req, res) => {
         return res.status(201).json(productoGuardado); 
         
     } catch (err) {
-    // Esto rompe el [object Object] y obliga a Render a mostrar el texto real
-    console.error("💥 ERROR DETECTADO EN LA NUBE:", JSON.stringify(err, null, 2));
-    console.error("💥 MENSAJE CORTO:", err.message);
-    
-    return res.status(500).send("Error interno: " + err.message);
+        // 1. Esto imprime el objeto completo con su rastreo de líneas exactas (Stack Trace)
+        console.error("💥 ERROR DETECTADO EN LA NUBE:");
+        console.error(err); 
+        
+        // 2. Si es un error de Mongoose/MongoDB, esto extraerá el detalle interno
+        if (err.name) console.error("📋 Tipo de Error:", err.name);
+        if (err.code) console.error("🔑 Código de Error Mongo:", err.code);
+
+        return res.status(500).send("Error interno del servidor al guardar el producto.");
     }
 
 });
