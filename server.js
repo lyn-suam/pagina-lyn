@@ -11,7 +11,7 @@ const multer = require('multer');
 
 // --- CONEXIÓN DIRECTA Y SEGURA CON CLOUDINARY ---
 cloudinary.config({ 
-  cloud_name: 'pzgr0js', 
+  cloud_name: 'pzgr08js', 
   api_key: '336281365133553', 
   api_secret: 'qs2Fano3P1BSu1B5ThOC1-0Re9Y' 
 });
