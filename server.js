@@ -1,43 +1,37 @@
 const express = require('express');
 const multer = require('multer');
 const mongoose = require('mongoose');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const path = require('path'); 
 const fs = require('fs'); 
-const { MongoMemoryServer } = require('mongodb-memory-server');
 
 const app = express();
 
-// CORRECCIÓN DIRECTA: Crear carpeta temporal de imágenes si no existe
-const dirUploads = path.join(__dirname, 'uploads');
-if (!fs.existsSync(dirUploads)){
-    fs.mkdirSync(dirUploads);
-}
+// --- CONFIGURACIÓN DE CLOUDINARY ---
+cloudinary.config({ 
+  cloud_name: 'pzgr0js', 
+  api_key: '336281365133553', 
+  api_secret: 'qs2Fano3P1BSu1B5ThOC1-0Re9Y' 
+});
 
-// Configurar Multer para almacenar las imágenes localmente en tu computadora
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'uploads/');
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname));
-    }
+// Configurar Multer para enviar los archivos directo a Cloudinary (Acepta cualquier formato en Render)
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'tienda_productos', 
+    allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'jfif']
+  },
 });
 const upload = multer({ storage });
 
-// --- CONFIGURACIÓN DE MONGODB PORTÁTIL ---
-async function iniciarBaseDeDatos() {
-  try {
-    const mongoServer = await MongoMemoryServer.create({
-      binary: { version: '6.0.14' }
-    });
-    const uriLocal = mongoServer.getUri();
-    await mongoose.connect(uriLocal);
-    console.log('¡Conectado con éxito a tu MongoDB Local Automático (v6.0)! 🚀');
-  } catch (err) {
-    console.error('Error al inicializar la base de datos local:', err);
-  }
-}
-iniciarBaseDeDatos();
+// --- CONFIGURACIÓN DE MONGODB ATLAS (PRODUCCIÓN REAL) ---
+// ⚠️ REEMPLAZA ESTE ENLACE POR TU STRING DE CONEXIÓN DE MONGODB ATLAS
+const MONGO_URI = 'TU_LINK_DE_CONEXION_DE_MONGODB_ATLAS';
+
+mongoose.connect(MONGO_URI)
+  .then(() => console.log('¡Conectado con éxito a MongoDB Atlas en la nube! ☁️🚀'))
+  .catch(err => console.error('Error al conectar a MongoDB Atlas:', err));
 
 // Definimos el esquema y el modelo de Producto
 const Producto = mongoose.model('Producto', new mongoose.Schema({
@@ -49,18 +43,17 @@ const Producto = mongoose.model('Producto', new mongoose.Schema({
 // --- MIDDLEWARES ---
 app.use(express.json()); 
 app.use(express.static(path.join(__dirname, '.'))); 
-app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Servir imágenes locales
 
 app.get('/', (req, res) => {
     const htmlPath = path.join(__dirname, 'index.html');
     if (fs.existsSync(htmlPath)) {
         res.sendFile(htmlPath);
     } else {
-        res.send("<h1>¡Servidor funcionando!</h1>");
+        res.send("<h1>¡Servidor de LYN Store Funcionando en Render!</h1>");
     }
 });
 
-// 1. OBTENER PRODUCTOS
+// 1. OBTENER PRODUCTOS (Desde la nube de Atlas)
 app.get('/productos', async (req, res) => {
     try {
         const productos = await Producto.find();
@@ -70,28 +63,25 @@ app.get('/productos', async (req, res) => {
     }
 });
 
-// 2. CREAR PRODUCTO (MongoDB Portátil + Multer Local)
+// 2. CREAR PRODUCTO (MongoDB Atlas + Cloudinary)
 app.post('/productos', upload.single('imagen'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).send("Error: No se recibió ningún archivo de imagen.");
         }
         
-        // Construimos la ruta local legible por el navegador (ej: /uploads/12345.png)
-        const imagenPath = '/uploads/' + req.file.filename;
-
         const nuevoProducto = new Producto({
             nombre: req.body.nombre,
             precio: Number(req.body.precio), 
-            imagen: imagenPath 
+            imagen: req.file.path // La URL segura https://res.cloudinary.com/...
         });
 
         const productoGuardado = await nuevoProducto.save();
         return res.status(201).json(productoGuardado); 
         
     } catch (err) {
-        console.error("❌ ERROR INTERNO EN POST /PRODUCTOS:", err);
-        return res.status(500).send("Error interno del servidor: " + err.message);
+        console.error("❌ ERROR EN PRODUCCIÓN:", err);
+        return res.status(500).send("Error interno en la nube: " + err.message);
     }
 });
 
@@ -117,4 +107,4 @@ app.delete('/productos/:id', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Servidor corriendo en http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}`));
