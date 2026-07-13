@@ -25,7 +25,7 @@ const storage = new CloudinaryStorage({
 const upload = multer({ storage });
 
 // Conexión a la nube de MongoDB Atlas
-const uri = "mongodb+srv://pagina_lyn_store:jajajaok@cluster0.XXXXX.mongodb.net/?retryWrites=true&w=majority";
+const uri = "mongodb+srv://esuam30:jajajaok.@lynlyn.8u3ac5t.mongodb.net/?appName=lynlyn";
 
 mongoose.connect(uri)
   .then(() => console.log('¡Conectado a la nube de MongoDB!'))
