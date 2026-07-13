@@ -10,9 +10,9 @@ const app = express();
 
 // --- CONFIGURACIÓN DE CLOUDINARY ---
 cloudinary.config({ 
-  cloud_name: 'pzgr0js', 
-  api_key: '336281365133553', 
-  api_secret: 'qs2Fano3P1BSu1B5ThOC1-0Re9Y' 
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'pzgr0js', 
+  api_key: process.env.CLOUDINARY_API_KEY || '336281365133553', 
+  api_secret: process.env.CLOUDINARY_API_SECRET || 'qs2Fano3P1BSu1B5ThOC1-0Re9Y' 
 });
 
 // Configurar Multer para enviar los archivos directo a Cloudinary (Acepta cualquier formato en Render)
