@@ -28,7 +28,7 @@ const upload = multer({ storage });
 // --- CONFIGURACIÓN DE MONGODB ATLAS (PRODUCCIÓN REAL) ---
 // ⚠️ REEMPLAZA ESTE ENLACE POR TU STRING DE CONEXIÓN DE MONGODB ATLAS
 // EJEMPLO DE CÓMO DEBE QUEDAR EN TU ARCHIVO (Con tus datos reales):
-const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://esuam30:jajajaok.@cluster0.abcde.mongodb.net/tienda?retryWrites=true&w=majority';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://esuam30:jajajaok.@lynlyn.8u3ac5t.mongodb.net/?appName=lynlyn';
 
 mongoose.connect(MONGO_URI)
   .then(() => console.log('¡Conectado con éxito a MongoDB Atlas en la nube! ☁️🚀'))
