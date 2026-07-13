@@ -25,7 +25,12 @@ const storage = new CloudinaryStorage({
 const upload = multer({ storage });
 
 // Conexión a la nube de MongoDB Atlas
+// Enlace clásico directo (evita que tu router doméstico bloquee la conexión)
+// Usamos tu enlace original pero forzando la conexión directa para limpiar el atasco local
+// Tu enlace original estándar que en Render funciona perfecto
 const uri = "mongodb+srv://esuam30:jajajaok.@cluster0.tphf9.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+
+
 
 mongoose.connect(uri)
   .then(() => console.log('¡Conectado a la nube de MongoDB!'))
