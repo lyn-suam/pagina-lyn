@@ -1,19 +1,18 @@
 let carritoTotal = 0;
 
-// Manejo de Vistas sincronizado
+// Alternar vistas controlando la visibilidad nativa de los elementos
 function mostrarVista(vista) {
+    const titulo = document.getElementById('titulo-pagina');
+    const formulario = document.getElementById('admin-form-container');
+    
     if (vista === 'vendedor') {
         document.getElementById('login-modal').style.display = 'flex';
     } else {
-        const app = document.getElementById('app');
-        if (app) {
-            // Reestablecemos el layout nativo del comprador de forma limpia
-            app.innerHTML = `
-                <h1>Bienvenido a la Tienda</h1>
-                <div id="productos-grid" class="grid"></div>
-            `;
-        }
-        setTimeout(() => cargarProductos(false), 50);
+        // Modo Comprador: Ocultamos formulario y mostramos catálogo
+        if (titulo) titulo.innerText = "Bienvenido a la Tienda";
+        if (formulario) formulario.style.display = 'none';
+        cerrarModal();
+        cargarProductos(false);
     }
 }
 
@@ -24,7 +23,7 @@ function cerrarModal() {
     }
 }
 
-// Login del Administrador
+// Iniciar sesión como administrador
 async function verificarLogin() {
     const usuario = document.getElementById('login-user').value;
     const password = document.getElementById('login-pass').value;
@@ -38,27 +37,21 @@ async function verificarLogin() {
     const data = await res.json();
     if (data.success) {
         cerrarModal();
-        const app = document.getElementById('app');
-        if (app) {
-            // Colocamos el formulario administrativo arriba y la grilla abajo
-            app.innerHTML = `
-                <div class="form-container" style="margin: 20px auto; text-align: center; max-width: 400px; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background: #fff; color: #333;">
-                    <h1>Nuevo Producto</h1>
-                    <input id="nombre" placeholder="Nombre" style="margin: 5px; padding: 8px; width: 80%;"><br>
-                    <input id="precio" type="number" placeholder="Precio" style="margin: 5px; padding: 8px; width: 80%;"><br>
-                    <input type="file" id="fileInput" style="margin: 5px; padding: 8px; width: 80%;"><br>
-                    <button onclick="subirProducto()" style="padding: 10px 20px; margin-top: 10px; cursor: pointer;">Guardar Producto</button>
-                </div>
-                <div id="productos-grid" class="grid"></div>
-            `;
-        }
-        setTimeout(() => cargarProductos(true), 50);
+        
+        const titulo = document.getElementById('titulo-pagina');
+        const formulario = document.getElementById('admin-form-container');
+        
+        // Activamos la interfaz de vendedor de forma limpia sin romper el DOM
+        if (titulo) titulo.innerText = "Panel de Administración";
+        if (formulario) formulario.style.display = 'flex';
+        
+        cargarProductos(true); // Carga los productos con botones de eliminar
     } else {
         alert("Credenciales incorrectas");
     }
 }
 
-// Cargar productos en la grilla dinámica
+// Cargar productos en la grilla dinámica desde MongoDB Atlas
 async function cargarProductos(esVendedor = false) {
     try {
         const res = await fetch('/productos');
@@ -73,24 +66,28 @@ async function cargarProductos(esVendedor = false) {
                 <h3>${p.nombre}</h3>
                 <p class="price">S/ ${Number(p.precio).toFixed(2)}</p>
                 <button onclick="agregarAlCarrito(${p.precio})">Agregar al Carrito</button>
-                ${esVendedor ? `<button class="btn-eliminar" onclick="eliminarProducto('${p._id}')" style="background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; margin-top: 5px; cursor: pointer;">Eliminar</button>` : ''}
+                ${esVendedor ? `<br><button class="btn-eliminar" onclick="eliminarProducto('${p._id}')">Eliminar</button>` : ''}
             </div>
         `).join('');
     } catch (error) {
-        console.error("Error al obtener o renderizar productos:", error);
+        console.error("Error al renderizar los productos:", error);
     }
 }
 
-// Eliminar Producto
+// Eliminar Producto usando el _id único de MongoDB
 async function eliminarProducto(id) {
     if (confirm("¿Estás seguro de eliminar este producto?")) {
         await fetch(`/productos/${id}`, { method: 'DELETE' });
         alert("Producto eliminado");
-        cargarProductos(true);
+        
+        // Verificamos en qué modo estamos para recargar correctamente
+        const formulario = document.getElementById('admin-form-container');
+        const esVendedor = formulario && formulario.style.display === 'flex';
+        cargarProductos(esVendedor);
     }
 }
 
-// Subir Producto
+// Subir nuevo producto a Cloudinary y MongoDB Atlas
 async function subirProducto() {
     const nombre = document.getElementById('nombre').value;
     const precio = document.getElementById('precio').value;
@@ -109,7 +106,12 @@ async function subirProducto() {
     await fetch('/productos', { method: 'POST', body: formData });
     alert("Producto guardado exitosamente");
     
-    // Forzamos un regreso limpio a la vista de comprador
+    // Limpiamos los campos del formulario anterior
+    document.getElementById('nombre').value = '';
+    document.getElementById('precio').value = '';
+    document.getElementById('fileInput').value = '';
+    
+    // Regresamos fluidamente a la vista de comprador
     mostrarVista('comprador');
 }
 
@@ -118,4 +120,5 @@ function agregarAlCarrito(precio) {
     document.getElementById('total-display').innerText = `S/ ${carritoTotal.toFixed(2)}`;
 }
 
+// Inicializar la carga por primera vez
 document.addEventListener('DOMContentLoaded', () => mostrarVista('comprador'));

@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LYN Store</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Pequeño ajuste para que los enlaces de la barra se vean en línea */
+        .navbar nav ul { display: flex; list-style: none; margin: 0; padding: 0; }
+        .navbar nav ul li { margin-left: 15px; }
+    </style>
 </head>
 <body>
     <header class="navbar">
@@ -20,8 +25,17 @@
         </div>
     </header>
 
-    <main id="app" class="container">
-        <h1>Bienvenido a la Tienda</h1>
+    <main class="container">
+        <h1 id="titulo-pagina" style="text-align: center; margin-top: 20px;">Bienvenido a la Tienda</h1>
+        
+        <div id="admin-form-container" class="form-container" style="display: none; background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <h2>Nuevo Producto</h2>
+            <input id="nombre" placeholder="Nombre"><br>
+            <input id="precio" type="number" placeholder="Precio"><br>
+            <input type="file" id="fileInput"><br>
+            <button class="btn-guardar" onclick="subirProducto()">Guardar Producto</button>
+        </div>
+
         <div id="productos-grid" class="grid"></div>
     </main>
 
