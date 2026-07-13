@@ -126,4 +126,22 @@ app.delete('/productos/:id', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
+
+app.use((err, req, res, next) => {
+    console.error("💥 ERROR GLOBAL DETECTADO EN EL SERVIDOR:");
+    
+    // Imprime el mensaje directo
+    console.error("Mensaje:", err.message);
+    
+    // Imprime todo el objeto de error detallado en la consola de Render
+    console.error(err); 
+    
+    // Si viene de Multer, nos dará una pista de archivo
+    if (err instanceof multer.MulterError) {
+        console.error("❌ Error específico de Multer:", err.code);
+    }
+
+    res.status(500).send("Error interno atrapado por el middleware global: " + err.message);
+});
+
 app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}`));
